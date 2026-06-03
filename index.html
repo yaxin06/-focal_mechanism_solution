@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>P 波初動震源機制球互動 Demo</title>
+  <style>
+    :root{
+      --bg:#10131c;
+      --panel:#171b27;
+      --panel-2:#202638;
+      --text:#f7f3ec;
+      --muted:#b8bfd2;
+      --line:rgba(255,255,255,.14);
+      --gold:#f2c46d;
+      --red:#e86f6f;
+      --blue:#70b7ff;
+      --green:#8ee09f;
+      --purple:#b79cff;
+      --white:#ffffff;
+      --shadow:0 22px 70px rgba(0,0,0,.35);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family: "Noto Sans TC","Microsoft JhengHei",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at top left,rgba(112,183,255,.22),transparent 34rem),
+        radial-gradient(circle at top right,rgba(232,111,111,.18),transparent 32rem),
+        linear-gradient(135deg,#0d111a 0%,#15192a 46%,#0d111a 100%);
+      color:var(--text);
+      line-height:1.65;
+    }
+    a{color:var(--gold)}
+    .hero{
+      min-height:92vh;
+      padding:56px 6vw 36px;
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:32px;
+      align-items:center;
+    }
+    .eyebrow{
+      color:var(--gold);
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      font-weight:800;
+      font-size:.78rem;
+      margin-bottom:14px;
+    }
+    h1{
+      font-size:clamp(2.25rem,5vw,5rem);
+      line-height:1.04;
+      margin:.1rem 0 1rem;
+      letter-spacing:-.055em;
+    }
+    .hero p{color:var(--muted);font-size:1.06rem;max-width:68ch}
+    .hero-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:24px;
+    }
+    .btn{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:11px 16px;
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+      transition:.2s ease;
+      font-weight:800;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+    }
+    .btn:hover{transform:translateY(-2px);border-color:rgba(242,196,109,.6);background:rgba(242,196,109,.12)}
+    .btn.primary{background:linear-gradient(135deg,#f2c46d,#e86f6f);color:#17100c;border-color:transparent}
+    .btn.danger{background:rgba(232,111,111,.12);border-color:rgba(232,111,111,.4)}
+    .hero-card{
+      background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.025));
+      border:1px solid var(--line);
+      border-radius:32px;
+      padding:22px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+    .mini-ball{
+      width:100%;
+      aspect-ratio:1/1;
+      border-radius:28px;
+      background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.1),transparent 38%), var(--panel);
+      display:grid;
+      place-items:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .mini-ball:before{
+      content:"";
+      width:78%;
+      height:78%;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.25);
+      background:
+        linear-gradient(35deg,transparent 46%,rgba(242,196,109,.5) 47%,rgba(242,196,109,.5) 49%,transparent 50%),
+        linear-gradient(135deg,transparent 48%,rgba(112,183,255,.42) 49%,rgba(112,183,255,.42) 51%,transparent 52%),
+        radial-gradient(circle,rgba(255,255,255,.07),transparent 68%);
+      box-shadow:inset 0 0 60px rgba(255,255,255,.06),0 0 80px rgba(112,183,255,.13);
+    }
+    .mini-ball .dot{
+      position:absolute;width:14px;height:14px;border-radius:50%;
+      border:2px solid var(--white);
+      box-shadow:0 0 22px rgba(255,255,255,.3);
+    }
+    .mini-ball .dot.fill{background:var(--gold);border-color:var(--gold)}
+    .mini-ball .d1{left:60%;top:33%}
+    .mini-ball .d2{left:26%;top:34%;background:transparent}
+    .mini-ball .d3{right:20%;bottom:20%;background:transparent}
+    .mini-ball .d4{left:47%;bottom:19%}
+    .stats-row{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-top:16px;
+    }
+    .stat{
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.055);
+      border:1px solid var(--line);
+    }
+    .stat b{display:block;font-size:1.35rem;line-height:1.1}
+    .stat span{font-size:.78rem;color:var(--muted)}
+    main{padding:0 6vw 70px}
+    .section-title{
+      display:flex;align-items:end;justify-content:space-between;gap:18px;
+      margin:34px 0 16px;
+    }
+    .section-title h2{
+      font-size:clamp(1.65rem,3vw,2.6rem);
+      letter-spacing:-.035em;
+      margin:0;
+    }
+    .section-title p{margin:0;color:var(--muted);max-width:68ch}
+    .app{
+      display:grid;
+      grid-template-columns: 360px minmax(420px,1fr) 330px;
+      gap:18px;
+      align-items:start;
+    }
+    .panel{
+      background:rgba(23,27,39,.88);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+    .panel h3{margin:.2rem 0 .75rem;font-size:1.12rem}
+    label{font-weight:800;font-size:.88rem;color:#dde3f3}
+    input,select{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.07);
+      color:var(--text);
+      padding:11px 12px;
+      outline:none;
+      margin:7px 0 12px;
+    }
+    select option{background:#171b27;color:var(--text)}
+    input[type="range"]{accent-color:var(--gold);padding:0}
+    .checks{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:6px 0 14px}
+    .check{
+      display:flex;align-items:center;gap:8px;
+      padding:9px 10px;border-radius:14px;
+      background:rgba(255,255,255,.055);border:1px solid var(--line);
+      font-weight:800;color:var(--text);font-size:.85rem;
+    }
+    .check input{width:auto;margin:0}
+    .legend{display:grid;grid-template-columns:1fr;gap:8px;margin:12px 0}
+    .legend-row{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:.88rem}
+    .sym{display:inline-flex;align-items:center;gap:8px;color:var(--text);font-weight:900}
+    .circle-sym{width:14px;height:14px;border-radius:50%;border:2px solid var(--white);display:inline-block}
+    .circle-sym.fill{background:var(--gold);border-color:var(--gold)}
+    .circle-sym.open{background:transparent;border-color:var(--blue)}
+    .circle-sym.unknown{border-radius:3px;transform:rotate(45deg);background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.1)}
+    .plot-wrap{
+      position:sticky;
+      top:16px;
+      min-height:650px;
+    }
+    #beachball{
+      width:100%;
+      aspect-ratio:1/1;
+      min-height:480px;
+      border-radius:var(--radius);
+      display:block;
+      background:
+        radial-gradient(circle at center,rgba(255,255,255,.04),transparent 67%),
+        linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+      border:1px solid var(--line);
+      cursor:crosshair;
+      touch-action:none;
+    }
+    .svg-label{font-size:15px;font-weight:900;fill:rgba(255,255,255,.78)}
+    .grid-line{stroke:rgba(255,255,255,.18);stroke-width:1;fill:none}
+    .axis-line{stroke:rgba(242,196,109,.32);stroke-width:1.4}
+    .station-point{cursor:pointer;transition:opacity .15s ease}
+    .station-point:hover{filter:drop-shadow(0 0 8px rgba(242,196,109,.7))}
+    .station-label{font-size:12px;fill:#fff;font-weight:900;paint-order:stroke;stroke:#12151f;stroke-width:4px;stroke-linejoin:round}
+    .guide-line{stroke:rgba(242,196,109,.75);stroke-width:2;stroke-dasharray:7 7}
+    .guide-ring{stroke:rgba(242,196,109,.5);stroke-width:2;fill:none;stroke-dasharray:5 6}
+    .draw-path{fill:none;stroke:#f2c46d;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 8px rgba(242,196,109,.25))}
+    .info-card{
+      border-radius:20px;
+      padding:15px;
+      background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      margin-bottom:12px;
+    }
+    .info-card .big{font-size:1.6rem;font-weight:950;line-height:1;margin-bottom:8px}
+    .kv{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+    .kv div{
+      padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.07)
+    }
+    .kv span{display:block;color:var(--muted);font-size:.72rem}
+    .kv b{font-size:.95rem}
+    .formula{
+      background:#0f1320;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:12px;
+      color:#e8ecfa;
+      font-family:"Cascadia Code","Consolas",monospace;
+      font-size:.86rem;
+      white-space:pre-wrap;
+      overflow:auto;
+    }
+    .station-list{
+      max-height:286px;
+      overflow:auto;
+      display:grid;
+      gap:8px;
+      padding-right:4px;
+    }
+    .station-item{
+      display:grid;
+      grid-template-columns:56px 1fr auto;
+      gap:8px;
+      align-items:center;
+      padding:9px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.045);
+      cursor:pointer;
+    }
+    .station-item:hover,.station-item.active{border-color:rgba(242,196,109,.6);background:rgba(242,196,109,.09)}
+    .station-item strong{font-size:.92rem}
+    .station-item small{color:var(--muted)}
+    .pill{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:30px;
+      padding:3px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
+      background:rgba(255,255,255,.08);border:1px solid var(--line)
+    }
+    .pill.plus{background:rgba(242,196,109,.16);color:#ffe2a5;border-color:rgba(242,196,109,.35)}
+    .pill.minus{background:rgba(112,183,255,.15);color:#bdddff;border-color:rgba(112,183,255,.35)}
+    .pill.unknown{color:#cbd0dd}
+    .demo-box{
+      margin-top:12px;
+      padding:14px;
+      border-radius:20px;
+      border:1px solid rgba(242,196,109,.28);
+      background:rgba(242,196,109,.075);
+    }
+    .demo-box b{color:#ffe0a1}
+    .grid-2{
+      display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    }
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+      margin-top:16px;
+    }
+    .text-card{
+      background:rgba(23,27,39,.86);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:20px;
+      box-shadow:var(--shadow);
+    }
+    .text-card h3{margin-top:0;color:#fff}
+    .text-card p,.text-card li{color:var(--muted)}
+    .text-card ul{padding-left:1.25rem}
+    .steps{
+      counter-reset:step;
+      display:grid;
+      gap:12px;
+    }
+    .step{
+      position:relative;
+      padding:15px 15px 15px 56px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.045);
+    }
+    .step:before{
+      counter-increment:step;
+      content:counter(step);
+      position:absolute;left:14px;top:14px;
+      width:28px;height:28px;border-radius:50%;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,#f2c46d,#e86f6f);
+      color:#17100c;font-weight:950;
+    }
+    .step b{display:block;margin-bottom:3px}
+    .accordion details{
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:12px 14px;
+      background:rgba(255,255,255,.04);
+      margin-bottom:10px;
+    }
+    .accordion summary{font-weight:950;cursor:pointer;color:#fff}
+    .accordion p{color:var(--muted)}
+    .challenge-result{
+      min-height:40px;
+      color:#ffe0a1;
+      font-weight:900;
+      margin-top:8px;
+    }
+    footer{
+      padding:28px 6vw 42px;
+      border-top:1px solid var(--line);
+      color:var(--muted);
+      background:rgba(0,0,0,.15);
+    }
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);
+      opacity:0;pointer-events:none;
+      background:#0f1320;border:1px solid rgba(242,196,109,.45);
+      color:#fff;border-radius:999px;padding:10px 16px;box-shadow:var(--shadow);
+      transition:.25s ease;z-index:10;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media (max-width:1180px){
+      .app{grid-template-columns:320px 1fr}
+      .right-panel{grid-column:1 / -1}
+      .plot-wrap{position:static}
+      .cards{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width:850px){
+      .hero{grid-template-columns:1fr;padding-top:34px}
+      .app{grid-template-columns:1fr}
+      .stats-row{grid-template-columns:repeat(2,1fr)}
+      .cards{grid-template-columns:1fr}
+      #beachball{min-height:auto}
+    }
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">P-wave First Motion · Focal Mechanism Demo</div>
+      <h1>把 azimuth、take-off angle、上下動畫進震源機制球</h1>
+      <p>
+        這個互動網頁已經把你的 P25 檔案資料轉成可視化測站點。
+        你可以篩選測站、切換投影、點選任一站看換算步驟，也可以進入「手繪練習模式」逐站學會怎麼把 P 波初動放到焦球上。
+      </p>
+      <div class="hero-actions">
+        <a class="btn primary" href="#demo">開始互動 Demo</a>
+        <a class="btn" href="#principle">看原理解釋</a>
+        <a class="btn" href="#manual">手繪訣竅</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="mini-ball">
+        <span class="dot fill d1"></span>
+        <span class="dot d2"></span>
+        <span class="dot d3"></span>
+        <span class="dot fill d4"></span>
+      </div>
+      <div class="stats-row">
+        <div class="stat"><b id="statTotal">213</b><span>測站總數</span></div>
+        <div class="stat"><b id="statPlus">139</b><span>上動 +</span></div>
+        <div class="stat"><b id="statMinus">15</b><span>下動 −</span></div>
+        <div class="stat"><b id="statUnknown">59</b><span>未標明</span></div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <div class="section-title" id="demo">
+      <div>
+        <h2>互動式震源機制球</h2>
+        <p>預設使用下半球投影：起飛角大於 90° 的點會轉到下半球，方位角加 180°，再把角度改成 180° − take-off angle。</p>
+      </div>
+    </div>
+
+    <section class="app">
+      <aside class="panel">
+        <h3>控制面板</h3>
+        <label for="searchBox">搜尋測站</label>
+        <input id="searchBox" placeholder="例如 TWC / EOS2 / MATB" />
+
+        <label for="projectionSelect">投影方式</label>
+        <select id="projectionSelect">
+          <option value="schmidt">Schmidt equal-area（較正式）</option>
+          <option value="linear">手繪比例（角度線性）</option>
+          <option value="stereo">Stereographic equal-angle</option>
+        </select>
+
+        <div class="grid-2">
+          <div>
+            <label for="maxDistance">最大距離 km</label>
+            <input id="maxDistance" type="range" min="20" max="950" value="950" step="10" />
+          </div>
+          <div>
+            <label for="pointSize">點大小</label>
+            <input id="pointSize" type="range" min="4" max="13" value="7" step="1" />
+          </div>
+        </div>
+        <div class="legend-row"><span>距離上限</span><b><span id="distanceText">950</span> km</b></div>
+
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="showPlus" checked /> 顯示 +</label>
+          <label class="check"><input type="checkbox" id="showMinus" checked /> 顯示 −</label>
+          <label class="check"><input type="checkbox" id="showUnknown" /> 顯示未標</label>
+          <label class="check"><input type="checkbox" id="showLabels" checked /> 顯示標籤</label>
+          <label class="check"><input type="checkbox" id="demoOnly" /> 只看 6 站</label>
+          <label class="check"><input type="checkbox" id="drawMode" /> 畫節線</label>
+        </div>
+
+        <div class="legend">
+          <div class="legend-row"><span class="sym"><i class="circle-sym fill"></i> 上動 +</span><span>實心點</span></div>
+          <div class="legend-row"><span class="sym"><i class="circle-sym open"></i> 下動 −</span><span>空心點</span></div>
+          <div class="legend-row"><span class="sym"><i class="circle-sym unknown"></i> 未標明</span><span>灰色小點</span></div>
+        </div>
+
+        <div class="grid-2">
+          <button class="btn" id="recommendedBtn">標出推薦 6 站</button>
+          <button class="btn danger" id="clearDrawBtn">清除節線</button>
+        </div>
+
+        <div class="demo-box">
+          <b>作業推薦至少 5 站：</b>
+          <div id="recommendedText">TWC、EOS2、TUIB、VWUC、MATB、JOW</div>
+          <button class="btn primary" id="walkBtn" style="margin-top:10px;width:100%;justify-content:center">逐站示範</button>
+        </div>
+      </aside>
+
+      <section class="panel plot-wrap">
+        <svg id="beachball" viewBox="0 0 720 720" role="img" aria-label="下半球震源機制球測站投影圖">
+          <defs>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <g id="gridLayer"></g>
+          <g id="guideLayer"></g>
+          <g id="drawLayer"></g>
+          <g id="pointsLayer"></g>
+          <g id="labelLayer"></g>
+        </svg>
+        <div class="demo-box" id="walkText">
+          點選任一測站，右側會顯示「原始資料 → 下半球轉換 → 手繪位置」。
+        </div>
+      </section>
+
+      <aside class="panel right-panel">
+        <h3>測站資訊</h3>
+        <div class="info-card" id="stationInfo">
+          <div class="big">尚未選站</div>
+          <p style="color:var(--muted);margin:0">請在球上點選一個測站，或從下方清單選取。</p>
+        </div>
+
+        <h3>定位挑戰</h3>
+        <div class="info-card">
+          <p style="color:var(--muted);margin-top:0">按下出題後，根據測站的 azimuth / take-off / polarity，直接點在球上你認為的位置。</p>
+          <button class="btn primary" id="challengeBtn" style="width:100%;justify-content:center">出一題給我</button>
+          <div class="challenge-result" id="challengeResult"></div>
+        </div>
+
+        <h3>測站清單</h3>
+        <div class="station-list" id="stationList"></div>
+      </aside>
+    </section>
+
+    <div class="section-title" id="manual">
+      <div>
+        <h2>手動繪製訣竅</h2>
+        <p>考試或作業手繪時，不必把投影公式算到很精準；重點是方位、相對遠近、實心/空心不要搞錯。</p>
+      </div>
+    </div>
+
+    <section class="cards">
+      <article class="text-card">
+        <h3>手繪 5 步驟</h3>
+        <div class="steps">
+          <div class="step"><b>畫圓並標 N/E/S/W</b>0° 在北方，90° 東方，180° 南方，270° 西方。</div>
+          <div class="step"><b>讀 azimuth</b>方位角決定測站在圓上的方向，從北方順時針量。</div>
+          <div class="step"><b>處理 take-off angle</b>小於等於 90° 直接畫；大於 90° 要翻到下半球。</div>
+          <div class="step"><b>決定離圓心遠近</b>0° 靠圓心，90° 靠圓周；手繪可用線性比例。</div>
+          <div class="step"><b>畫上下動符號</b>+ 畫實心點，− 畫空心點；最後讓兩條節線盡量分隔 + / −。</div>
+        </div>
+      </article>
+
+      <article class="text-card">
+        <h3>大於 90° 的轉換口訣</h3>
+        <p>起飛角大於 90° 表示射線原本落在另一半球。要畫在下半球圖上時，用下面規則轉換：</p>
+        <div class="formula">newTakeOff = 180° - takeOff
+newAzimuth = azimuth + 180°
+若 newAzimuth ≥ 360°，再減 360°</div>
+        <p>例：TWC = 248° / 167° / + → 新位置是 68° / 13° / +，所以畫在東北偏東、靠近圓心的實心點。</p>
+      </article>
+
+      <article class="text-card">
+        <h3>點位判斷技巧</h3>
+        <ul>
+          <li>13°、23°：靠近圓心。</li>
+          <li>41°：中心到外圈之間，略偏內。</li>
+          <li>70°：接近圓周。</li>
+          <li>80°：非常靠近圓周。</li>
+          <li>實心點集中區通常代表壓縮象限；空心點集中區代表張裂象限。</li>
+        </ul>
+      </article>
+    </section>
+
+    <div class="section-title" id="principle">
+      <div>
+        <h2>P 波初動解的原理</h2>
+        <p>這一段可以直接放進你的報告或網頁介紹：它說明為什麼只用 azimuth、take-off angle、上下動，就能推估震源機制球。</p>
+      </div>
+    </div>
+
+    <section class="cards">
+      <article class="text-card">
+        <h3>1. P 波初動代表什麼？</h3>
+        <p>
+          地震發生時，P 波會最先到達測站。若測站記錄到第一個明顯位移是向上，通常記為
+          <b>+</b>，代表該方向初動屬於壓縮；若第一個明顯位移是向下，記為 <b>−</b>，代表該方向初動屬於張裂。
+        </p>
+        <p>
+          因此，每個測站都提供一個線索：震源往這個方向放出的 P 波，在第一瞬間是壓縮還是張裂。
+        </p>
+      </article>
+
+      <article class="text-card">
+        <h3>2. 為什麼需要 azimuth 與 take-off angle？</h3>
+        <p>
+          上下動只告訴我們「這個方向是 + 或 −」，但還不知道方向在哪裡。
+          <b>Azimuth</b> 決定水平方向，<b>take-off angle</b> 決定射線離垂直方向的角度。
+        </p>
+        <p>
+          兩者合在一起，就可以把每一個測站放到震源周圍的焦球上。
+        </p>
+      </article>
+
+      <article class="text-card">
+        <h3>3. 節面如何形成？</h3>
+        <p>
+          把很多測站都投影到焦球後，會看到 + 和 − 不是隨機分布，而是形成幾個區塊。
+          能把壓縮區與張裂區分開的兩條大圓，就是震源機制球上的兩條節面。
+        </p>
+        <p>
+          其中一條可能是真正斷層面，另一條是輔助面；單靠初動圖通常無法百分之百判斷哪一條才是真正破裂面。
+        </p>
+      </article>
+    </section>
+
+    <section class="text-card accordion" style="margin-top:16px">
+      <h3>報告可用的重點整理</h3>
+      <details open>
+        <summary>為什麼震源機制球叫 beachball？</summary>
+        <p>因為它把震源周圍三維球面的壓縮區與張裂區投影到二維圓形圖上，看起來像海灘球。深色區常代表壓縮象限，白色區常代表張裂象限。</p>
+      </details>
+      <details>
+        <summary>為什麼通常畫下半球？</summary>
+        <p>地震學常用下半球投影表示從震源向外發出的射線方向。若某個射線角度落到另一半球，就用方位角加 180°、take-off angle 取 180° 補角的方式轉回下半球作圖。</p>
+      </details>
+      <details>
+        <summary>手繪時最常錯哪裡？</summary>
+        <p>第一是方位角方向畫反，記得 azimuth 是從北方開始順時針量；第二是忘記把 take-off angle 大於 90° 的點翻面；第三是把 + / − 的實心空心符號畫反。</p>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <b>資料來源：</b>上傳之 P25 測站資料檔。此頁面為純前端版本，可直接部署於 GitHub Pages。<br>
+    <b>延伸閱讀：</b>
+    <a href="https://www.usgs.gov/programs/earthquake-hazards/focal-mechanisms-or-beachballs" target="_blank" rel="noreferrer">USGS focal mechanisms</a>、
+    <a href="https://pnsn.org/education/seismology/focal-mechanisms" target="_blank" rel="noreferrer">PNSN focal mechanisms</a>
+  </footer>
+
+  <div class="toast" id="toast">已複製</div>
+
+  <script>
+    const STATIONS = [{"station":"TWC","distance":15.8,"azimuth":248,"takeoff":167,"polarity":"+"},{"station":"ESA","distance":18.9,"azimuth":239,"takeoff":164,"polarity":"+"},{"station":"TUIB","distance":20.6,"azimuth":348,"takeoff":157,"polarity":"+"},{"station":"EGS","distance":20.9,"azimuth":349,"takeoff":156,"polarity":"+"},{"station":"ILA","distance":27.5,"azimuth":303,"takeoff":145,"polarity":"+"},{"station":"NTC","distance":27.6,"azimuth":329,"takeoff":145,"polarity":"+"},{"station":"NDS","distance":29.3,"azimuth":264,"takeoff":156,"polarity":"+"},{"station":"EWT","distance":33.2,"azimuth":219,"takeoff":148,"polarity":"+"},{"station":"TWE","distance":33.2,"azimuth":289,"takeoff":142,"polarity":"+"},{"station":"EOS2","distance":35.6,"azimuth":139,"takeoff":139,"polarity":"-"},{"station":"ENA","distance":36.8,"azimuth":217,"takeoff":140,"polarity":"+"},{"station":"TWB1","distance":38.2,"azimuth":354,"takeoff":145,"polarity":"+"},{"station":"TIPB","distance":38.9,"azimuth":331,"takeoff":132,"polarity":"+"},{"station":"FUSB","distance":43.7,"azimuth":293,"takeoff":131,"polarity":"+"},{"station":"NSG","distance":43.7,"azimuth":331,"takeoff":131,"polarity":"+"},{"station":"ENT","distance":43.8,"azimuth":270,"takeoff":141,"polarity":"+"},{"station":"EAH","distance":45.6,"azimuth":207,"takeoff":129,"polarity":"+"},{"station":"EHP","distance":46.8,"azimuth":207,"takeoff":134,"polarity":""},{"station":"SXI1","distance":49.7,"azimuth":334,"takeoff":123,"polarity":"+"},{"station":"NDT","distance":50.3,"azimuth":270,"takeoff":127,"polarity":"+"},{"station":"LATB","distance":50.5,"azimuth":246,"takeoff":128,"polarity":"+"},{"station":"WFSB","distance":50.7,"azimuth":333,"takeoff":132,"polarity":"+"},{"station":"A124","distance":51.0,"azimuth":304,"takeoff":127,"polarity":"+"},{"station":"EOS3","distance":52.5,"azimuth":143,"takeoff":125,"polarity":"-"},{"station":"TWA","distance":54.6,"azimuth":317,"takeoff":126,"polarity":"+"},{"station":"NHDH","distance":58.8,"azimuth":311,"takeoff":124,"polarity":"+"},{"station":"NOU","distance":58.9,"azimuth":336,"takeoff":128,"polarity":"+"},{"station":"NXZ","distance":59.0,"azimuth":321,"takeoff":123,"polarity":"+"},{"station":"NHY","distance":61.0,"azimuth":322,"takeoff":118,"polarity":""},{"station":"DYSB","distance":63.4,"azimuth":292,"takeoff":123,"polarity":"+"},{"station":"YHNB","distance":63.8,"azimuth":271,"takeoff":108,"polarity":"+"},{"station":"NSK","distance":64.7,"azimuth":271,"takeoff":108,"polarity":"+"},{"station":"TAP","distance":64.9,"azimuth":318,"takeoff":117,"polarity":"+"},{"station":"NNS","distance":67.9,"azimuth":242,"takeoff":121,"polarity":"+"},{"station":"EOS4","distance":68.0,"azimuth":160,"takeoff":115,"polarity":"-"},{"station":"NACB","distance":68.1,"azimuth":209,"takeoff":116,"polarity":"+"},{"station":"NNSB","distance":68.2,"azimuth":241,"takeoff":121,"polarity":"+"},{"station":"NWR","distance":69.3,"azimuth":330,"takeoff":119,"polarity":""},{"station":"YM01","distance":69.5,"azimuth":320,"takeoff":120,"polarity":"+"},{"station":"NSX","distance":71.0,"azimuth":302,"takeoff":120,"polarity":"+"},{"station":"YM08","distance":71.9,"azimuth":324,"takeoff":119,"polarity":"+"},{"station":"ZUZH","distance":72.5,"azimuth":319,"takeoff":119,"polarity":"+"},{"station":"NJS","distance":72.8,"azimuth":335,"takeoff":119,"polarity":""},{"station":"ETLH","distance":73.1,"azimuth":234,"takeoff":115,"polarity":"+"},{"station":"ANP","distance":75.2,"azimuth":320,"takeoff":118,"polarity":"+"},{"station":"TWD","distance":76.0,"azimuth":224,"takeoff":99,"polarity":"+"},{"station":"TWS1","distance":76.5,"azimuth":318,"takeoff":110,"polarity":"+"},{"station":"B011","distance":76.9,"azimuth":293,"takeoff":122,"polarity":"+"},{"station":"TWY","distance":78.7,"azimuth":329,"takeoff":113,"polarity":"+"},{"station":"NTS","distance":79.2,"azimuth":321,"takeoff":113,"polarity":"+"},{"station":"NTY","distance":80.9,"azimuth":299,"takeoff":125,"polarity":"+"},{"station":"NSM","distance":81.2,"azimuth":328,"takeoff":108,"polarity":""},{"station":"KSHI","distance":85.1,"azimuth":273,"takeoff":116,"polarity":"+"},{"station":"HWA","distance":85.7,"azimuth":197,"takeoff":101,"polarity":"+"},{"station":"HWLB","distance":85.8,"azimuth":197,"takeoff":101,"polarity":"+"},{"station":"NCU","distance":89.6,"azimuth":292,"takeoff":103,"polarity":"+"},{"station":"FUSS","distance":89.8,"azimuth":234,"takeoff":116,"polarity":"+"},{"station":"NCUH","distance":89.8,"azimuth":292,"takeoff":102,"polarity":"+"},{"station":"NFF","distance":90.0,"azimuth":273,"takeoff":115,"polarity":"+"},{"station":"GWUB","distance":92.1,"azimuth":266,"takeoff":112,"polarity":"+"},{"station":"ETM","distance":92.9,"azimuth":214,"takeoff":95,"polarity":"+"},{"station":"NJD","distance":93.3,"azimuth":275,"takeoff":98,"polarity":"+"},{"station":"EYL","distance":93.4,"azimuth":197,"takeoff":103,"polarity":"+"},{"station":"WHF","distance":93.9,"azimuth":227,"takeoff":115,"polarity":"+"},{"station":"TWT","distance":96.9,"azimuth":234,"takeoff":106,"polarity":"+"},{"station":"TDCB","distance":97.1,"azimuth":234,"takeoff":106,"polarity":"+"},{"station":"LIOB","distance":100.3,"azimuth":268,"takeoff":94,"polarity":"+"},{"station":"HSN1","distance":100.9,"azimuth":277,"takeoff":101,"polarity":""},{"station":"NST","distance":101.1,"azimuth":267,"takeoff":94,"polarity":"+"},{"station":"HSN","distance":102.1,"azimuth":280,"takeoff":101,"polarity":""},{"station":"NHW","distance":104.3,"azimuth":291,"takeoff":107,"polarity":""},{"station":"SBCB","distance":104.4,"azimuth":277,"takeoff":94,"polarity":"+"},{"station":"SHUL","distance":106.7,"azimuth":198,"takeoff":104,"polarity":"+"},{"station":"PCY","distance":107.2,"azimuth":3,"takeoff":104,"polarity":""},{"station":"ESL","distance":110.0,"azimuth":219,"takeoff":101,"polarity":"+"},{"station":"H176","distance":110.1,"azimuth":269,"takeoff":95,"polarity":"+"},{"station":"OWD","distance":114.9,"azimuth":219,"takeoff":100,"polarity":"+"},{"station":"NJN","distance":115.1,"azimuth":270,"takeoff":99,"polarity":""},{"station":"EGC","distance":115.3,"azimuth":197,"takeoff":103,"polarity":""},{"station":"WHP","distance":115.6,"azimuth":247,"takeoff":90,"polarity":"+"},{"station":"WUSB","distance":116.7,"azimuth":230,"takeoff":99,"polarity":"+"},{"station":"NML","distance":120.1,"azimuth":273,"takeoff":97,"polarity":"+"},{"station":"F033","distance":120.4,"azimuth":206,"takeoff":87,"polarity":"+"},{"station":"WARB","distance":121.9,"azimuth":219,"takeoff":100,"polarity":"+"},{"station":"NMLH","distance":123.9,"azimuth":263,"takeoff":87,"polarity":"+"},{"station":"EGFH","distance":124.5,"azimuth":217,"takeoff":96,"polarity":"+"},{"station":"JIGB","distance":127.8,"azimuth":227,"takeoff":105,"polarity":"+"},{"station":"NSY","distance":128.3,"azimuth":256,"takeoff":84,"polarity":"+"},{"station":"WPL","distance":128.4,"azimuth":228,"takeoff":99,"polarity":"+"},{"station":"TWQ1","distance":129.0,"azimuth":254,"takeoff":87,"polarity":"+"},{"station":"WCS","distance":129.6,"azimuth":247,"takeoff":91,"polarity":"+"},{"station":"DPDB","distance":129.7,"azimuth":250,"takeoff":87,"polarity":"+"},{"station":"SML","distance":140.9,"azimuth":231,"takeoff":97,"polarity":"+"},{"station":"HGSD","distance":142.3,"azimuth":213,"takeoff":93,"polarity":"+"},{"station":"TYC","distance":142.5,"azimuth":227,"takeoff":98,"polarity":"+"},{"station":"WDJ","distance":142.8,"azimuth":254,"takeoff":88,"polarity":""},{"station":"SSLB","distance":144.0,"azimuth":232,"takeoff":100,"polarity":"+"},{"station":"EHY","distance":145.3,"azimuth":208,"takeoff":92,"polarity":"+"},{"station":"EHYH","distance":145.6,"azimuth":208,"takeoff":92,"polarity":"+"},{"station":"TCU","distance":145.7,"azimuth":246,"takeoff":87,"polarity":""},{"station":"B219","distance":149.2,"azimuth":242,"takeoff":82,"polarity":""},{"station":"WWC","distance":156.9,"azimuth":252,"takeoff":81,"polarity":""},{"station":"YULB","distance":157.8,"azimuth":207,"takeoff":89,"polarity":"+"},{"station":"WNT1","distance":158.4,"azimuth":248,"takeoff":81,"polarity":"+"},{"station":"WHY","distance":158.5,"azimuth":235,"takeoff":89,"polarity":"+"},{"station":"WNT","distance":159.1,"azimuth":247,"takeoff":79,"polarity":"+"},{"station":"ECB","distance":159.2,"azimuth":211,"takeoff":85,"polarity":"+"},{"station":"WJS","distance":159.6,"azimuth":245,"takeoff":79,"polarity":""},{"station":"WCHH","distance":160.4,"azimuth":244,"takeoff":79,"polarity":""},{"station":"EYUL","distance":161.3,"azimuth":205,"takeoff":88,"polarity":"+"},{"station":"TWF1","distance":161.6,"azimuth":206,"takeoff":89,"polarity":"+"},{"station":"WCH1","distance":161.8,"azimuth":244,"takeoff":79,"polarity":""},{"station":"WCH2","distance":163.2,"azimuth":244,"takeoff":79,"polarity":""},{"station":"WYL","distance":164.2,"azimuth":251,"takeoff":81,"polarity":""},{"station":"YUS","distance":167.9,"azimuth":210,"takeoff":88,"polarity":"+"},{"station":"CHKH","distance":174.1,"azimuth":193,"takeoff":90,"polarity":""},{"station":"ALS","distance":176.0,"azimuth":233,"takeoff":80,"polarity":"+"},{"station":"FULB","distance":177.3,"azimuth":205,"takeoff":82,"polarity":"+"},{"station":"CHN5","distance":179.2,"azimuth":238,"takeoff":81,"polarity":""},{"station":"WGK","distance":181.5,"azimuth":243,"takeoff":78,"polarity":"+"},{"station":"C092","distance":182.1,"azimuth":246,"takeoff":86,"polarity":""},{"station":"WDL","distance":182.2,"azimuth":244,"takeoff":79,"polarity":""},{"station":"WDLH","distance":183.9,"azimuth":244,"takeoff":77,"polarity":""},{"station":"CHK","distance":184.6,"azimuth":193,"takeoff":90,"polarity":"+"},{"station":"WRL","distance":185.4,"azimuth":251,"takeoff":83,"polarity":"+"},{"station":"EHD","distance":186.1,"azimuth":206,"takeoff":88,"polarity":"+"},{"station":"C168","distance":186.5,"azimuth":242,"takeoff":82,"polarity":""},{"station":"SYNB","distance":187.6,"azimuth":206,"takeoff":89,"polarity":""},{"station":"RLNB","distance":187.7,"azimuth":242,"takeoff":86,"polarity":"+"},{"station":"ECS","distance":190.9,"azimuth":205,"takeoff":84,"polarity":"+"},{"station":"ELD","distance":191.2,"azimuth":205,"takeoff":92,"polarity":"+"},{"station":"WTC","distance":195.6,"azimuth":241,"takeoff":79,"polarity":""},{"station":"WCKO","distance":196.5,"azimuth":233,"takeoff":85,"polarity":"+"},{"station":"WTK","distance":196.5,"azimuth":246,"takeoff":77,"polarity":""},{"station":"CHN2","distance":199.6,"azimuth":240,"takeoff":78,"polarity":""},{"station":"EDH","distance":200.1,"azimuth":201,"takeoff":81,"polarity":"+"},{"station":"CHN4","distance":204.0,"azimuth":235,"takeoff":78,"polarity":"+"},{"station":"WML","distance":204.5,"azimuth":240,"takeoff":81,"polarity":""},{"station":"CHY","distance":205.4,"azimuth":239,"takeoff":79,"polarity":""},{"station":"TPUB","distance":205.6,"azimuth":233,"takeoff":75,"polarity":"+"},{"station":"STYH","distance":205.9,"azimuth":208,"takeoff":83,"polarity":"+"},{"station":"STY","distance":208.6,"azimuth":208,"takeoff":83,"polarity":"+"},{"station":"WTP","distance":210.7,"azimuth":231,"takeoff":75,"polarity":"+"},{"station":"WSF","distance":213.2,"azimuth":235,"takeoff":79,"polarity":""},{"station":"LONT","distance":213.7,"azimuth":198,"takeoff":88,"polarity":"+"},{"station":"CHY1","distance":219.2,"azimuth":240,"takeoff":79,"polarity":""},{"station":"WSL","distance":220.4,"azimuth":243,"takeoff":82,"polarity":""},{"station":"SNS","distance":221.4,"azimuth":234,"takeoff":73,"polarity":""},{"station":"CHN1","distance":222.0,"azimuth":234,"takeoff":75,"polarity":"+"},{"station":"TWGB","distance":224.8,"azimuth":198,"takeoff":88,"polarity":"+"},{"station":"TWG","distance":224.8,"azimuth":198,"takeoff":88,"polarity":"+"},{"station":"SGS","distance":226.6,"azimuth":229,"takeoff":74,"polarity":"+"},{"station":"LDU","distance":226.8,"azimuth":199,"takeoff":93,"polarity":""},{"station":"ICHU","distance":227.1,"azimuth":228,"takeoff":73,"polarity":"+"},{"station":"TTN","distance":228.3,"azimuth":202,"takeoff":81,"polarity":""},{"station":"SLG","distance":230.7,"azimuth":208,"takeoff":83,"polarity":"+"},{"station":"CHN8","distance":232.5,"azimuth":228,"takeoff":73,"polarity":""},{"station":"CHN3","distance":242.3,"azimuth":233,"takeoff":78,"polarity":""},{"station":"SSH","distance":243.0,"azimuth":235,"takeoff":74,"polarity":"+"},{"station":"SCL","distance":246.6,"azimuth":226,"takeoff":71,"polarity":""},{"station":"SHH","distance":247.9,"azimuth":232,"takeoff":73,"polarity":"+"},{"station":"SCS","distance":249.7,"azimuth":228,"takeoff":72,"polarity":"+"},{"station":"ECL","distance":252.2,"azimuth":198,"takeoff":86,"polarity":""},{"station":"SSD","distance":253.7,"azimuth":205,"takeoff":81,"polarity":""},{"station":"TAI1","distance":254.4,"azimuth":234,"takeoff":72,"polarity":"+"},{"station":"SMG","distance":257.1,"azimuth":213,"takeoff":66,"polarity":"+"},{"station":"TAI","distance":260.2,"azimuth":236,"takeoff":75,"polarity":""},{"station":"VWUC","distance":261.7,"azimuth":278,"takeoff":80,"polarity":"-"},{"station":"SGL","distance":263.8,"azimuth":217,"takeoff":71,"polarity":"+"},{"station":"D009","distance":266.2,"azimuth":232,"takeoff":75,"polarity":"+"},{"station":"MATB","distance":266.3,"azimuth":309,"takeoff":80,"polarity":"-"},{"station":"MASB","distance":266.6,"azimuth":213,"takeoff":67,"polarity":"+"},{"station":"PH05","distance":267.7,"azimuth":241,"takeoff":74,"polarity":""},{"station":"SPT","distance":268.2,"azimuth":215,"takeoff":66,"polarity":"+"},{"station":"SNJ","distance":271.2,"azimuth":218,"takeoff":65,"polarity":""},{"station":"KAUH","distance":274.6,"azimuth":230,"takeoff":74,"polarity":"+"},{"station":"PNG","distance":276.5,"azimuth":240,"takeoff":73,"polarity":""},{"station":"PHUB","distance":277.7,"azimuth":240,"takeoff":75,"polarity":"-"},{"station":"EAS","distance":278.2,"azimuth":199,"takeoff":87,"polarity":""},{"station":"TAW","distance":278.8,"azimuth":199,"takeoff":90,"polarity":""},{"station":"D090","distance":280.8,"azimuth":216,"takeoff":68,"polarity":""},{"station":"TAWH","distance":281.1,"azimuth":200,"takeoff":90,"polarity":"+"},{"station":"SSP","distance":282.1,"azimuth":211,"takeoff":68,"polarity":"+"},{"station":"D106","distance":284.0,"azimuth":218,"takeoff":68,"polarity":"+"},{"station":"WDG","distance":284.3,"azimuth":233,"takeoff":73,"polarity":""},{"station":"WSS","distance":285.6,"azimuth":217,"takeoff":68,"polarity":"+"},{"station":"SCZ","distance":289.9,"azimuth":209,"takeoff":67,"polarity":"+"},{"station":"LYUB","distance":293.7,"azimuth":184,"takeoff":86,"polarity":"+"},{"station":"LAY","distance":294.1,"azimuth":183,"takeoff":86,"polarity":"+"},{"station":"PTMZ","distance":295.6,"azimuth":277,"takeoff":76,"polarity":"-"},{"station":"SLIU","distance":297.3,"azimuth":206,"takeoff":67,"polarity":"+"},{"station":"WLCH","distance":304.8,"azimuth":214,"takeoff":67,"polarity":"+"},{"station":"WLC","distance":305.8,"azimuth":214,"takeoff":67,"polarity":""},{"station":"VCHM","distance":307.7,"azimuth":236,"takeoff":76,"polarity":""},{"station":"LYJJ","distance":308.3,"azimuth":314,"takeoff":77,"polarity":"-"},{"station":"XPSS","distance":310.8,"azimuth":325,"takeoff":79,"polarity":"-"},{"station":"SMS","distance":315.7,"azimuth":203,"takeoff":73,"polarity":"+"},{"station":"HEN","distance":321.0,"azimuth":204,"takeoff":71,"polarity":""},{"station":"TWKB","distance":324.8,"azimuth":202,"takeoff":76,"polarity":"+"},{"station":"TWK1","distance":324.9,"azimuth":202,"takeoff":76,"polarity":""},{"station":"SNW","distance":325.4,"azimuth":204,"takeoff":74,"polarity":""},{"station":"SEB","distance":327.4,"azimuth":201,"takeoff":78,"polarity":"+"},{"station":"JMJ","distance":333.9,"azimuth":98,"takeoff":80,"polarity":"-"},{"station":"MHZQ","distance":340.0,"azimuth":299,"takeoff":74,"polarity":"-"},{"station":"EOSA","distance":354.3,"azimuth":208,"takeoff":71,"polarity":"+"},{"station":"KMNB","distance":367.9,"azimuth":262,"takeoff":72,"polarity":""},{"station":"KNM","distance":378.4,"azimuth":261,"takeoff":71,"polarity":""},{"station":"AXDP","distance":410.4,"azimuth":271,"takeoff":70,"polarity":"-"},{"station":"ZPLA","distance":440.5,"azimuth":254,"takeoff":70,"polarity":"-"},{"station":"DSXP","distance":477.8,"azimuth":251,"takeoff":70,"polarity":"-"},{"station":"SXFK","distance":480.3,"azimuth":295,"takeoff":69,"polarity":"-"},{"station":"JOW","distance":674.2,"azimuth":73,"takeoff":70,"polarity":"+"},{"station":"JMZ","distance":939.7,"azimuth":87,"takeoff":69,"polarity":""}];
+    const DEMO_STATIONS = ["TWC","EOS2","TUIB","VWUC","MATB","JOW"];
+    const CENTER = {x:360,y:360};
+    const R = 292;
+
+    const state = {
+      selected:null,
+      highlighted:new Set(DEMO_STATIONS),
+      projection:"schmidt",
+      challenge:null,
+      drawMode:false,
+      drawing:false,
+      activePath:null,
+      walkIndex:-1
+    };
+
+    const $ = (id)=>document.getElementById(id);
+
+    function counts(){
+      const total=STATIONS.length;
+      const plus=STATIONS.filter(s=>s.polarity==="+").length;
+      const minus=STATIONS.filter(s=>s.polarity==="-").length;
+      const unknown=STATIONS.filter(s=>!s.polarity).length;
+      $("statTotal").textContent=total;
+      $("statPlus").textContent=plus;
+      $("statMinus").textContent=minus;
+      $("statUnknown").textContent=unknown;
+    }
+
+    function transformed(s){
+      let az=s.azimuth;
+      let angle=s.takeoff;
+      let flipped=false;
+      if(angle>90){
+        angle=180-angle;
+        az=(az+180)%360;
+        flipped=true;
+      }
+      let frac;
+      if(state.projection==="linear"){
+        frac=angle/90;
+      }else if(state.projection==="stereo"){
+        frac=Math.tan((angle*Math.PI/180)/2);
+      }else{
+        frac=Math.SQRT2*Math.sin((angle*Math.PI/180)/2);
+      }
+      const r=R*frac;
+      const rad=az*Math.PI/180;
+      return {
+        station:s.station,
+        drawAz:az,
+        drawTake:angle,
+        flipped,
+        r,
+        x:CENTER.x + r*Math.sin(rad),
+        y:CENTER.y - r*Math.cos(rad)
+      };
+    }
+
+    function symbolText(pol){
+      if(pol==="+") return "上動 + / 實心點";
+      if(pol==="-") return "下動 − / 空心點";
+      return "未標明 / 灰色點";
+    }
+
+    function colorFor(s){
+      if(s.polarity==="+") return "#f2c46d";
+      if(s.polarity==="-") return "#70b7ff";
+      return "rgba(255,255,255,.36)";
+    }
+
+    function drawGrid(){
+      const g=$("gridLayer");
+      g.innerHTML="";
+      const circle=document.createElementNS("http://www.w3.org/2000/svg","circle");
+      circle.setAttribute("cx",CENTER.x);
+      circle.setAttribute("cy",CENTER.y);
+      circle.setAttribute("r",R);
+      circle.setAttribute("fill","rgba(255,255,255,.025)");
+      circle.setAttribute("stroke","rgba(255,255,255,.38)");
+      circle.setAttribute("stroke-width","2");
+      g.appendChild(circle);
+
+      [30,60,90].forEach(deg=>{
+        const frac = state.projection==="linear" ? deg/90 :
+          state.projection==="stereo" ? Math.tan((deg*Math.PI/180)/2) :
+          Math.SQRT2*Math.sin((deg*Math.PI/180)/2);
+        const ring=document.createElementNS("http://www.w3.org/2000/svg","circle");
+        ring.setAttribute("cx",CENTER.x);
+        ring.setAttribute("cy",CENTER.y);
+        ring.setAttribute("r",R*frac);
+        ring.setAttribute("class","grid-line");
+        g.appendChild(ring);
+
+        const label=document.createElementNS("http://www.w3.org/2000/svg","text");
+        label.setAttribute("x",CENTER.x+8);
+        label.setAttribute("y",CENTER.y-R*frac-5);
+        label.setAttribute("fill","rgba(255,255,255,.45)");
+        label.setAttribute("font-size","12");
+        label.textContent=deg+"°";
+        g.appendChild(label);
+      });
+
+      for(let az=0; az<360; az+=30){
+        const rad=az*Math.PI/180;
+        const x2=CENTER.x+R*Math.sin(rad);
+        const y2=CENTER.y-R*Math.cos(rad);
+        const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+        line.setAttribute("x1",CENTER.x);
+        line.setAttribute("y1",CENTER.y);
+        line.setAttribute("x2",x2);
+        line.setAttribute("y2",y2);
+        line.setAttribute("class",az%90===0 ? "axis-line":"grid-line");
+        g.appendChild(line);
+
+        if(az%30===0){
+          const tx=CENTER.x+(R+28)*Math.sin(rad);
+          const ty=CENTER.y-(R+28)*Math.cos(rad)+5;
+          const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+          t.setAttribute("x",tx);
+          t.setAttribute("y",ty);
+          t.setAttribute("text-anchor","middle");
+          t.setAttribute("font-size",az%90===0?16:11);
+          t.setAttribute("fill",az%90===0?"rgba(242,196,109,.9)":"rgba(255,255,255,.45)");
+          t.setAttribute("font-weight",az%90===0?"900":"700");
+          t.textContent = az===0?"N":az===90?"E":az===180?"S":az===270?"W":az+"°";
+          g.appendChild(t);
+        }
+      }
+    }
+
+    function visibleStations(){
+      const q=$("searchBox").value.trim().toUpperCase();
+      const maxD=Number($("maxDistance").value);
+      const showPlus=$("showPlus").checked;
+      const showMinus=$("showMinus").checked;
+      const showUnknown=$("showUnknown").checked;
+      const demoOnly=$("demoOnly").checked;
+      return STATIONS.filter(s=>{
+        if(demoOnly && !DEMO_STATIONS.includes(s.station)) return false;
+        if(q && !s.station.includes(q)) return false;
+        if(s.distance>maxD) return false;
+        if(s.polarity==="+" && !showPlus) return false;
+        if(s.polarity==="-" && !showMinus) return false;
+        if(!s.polarity && !showUnknown) return false;
+        return true;
+      });
+    }
+
+    function render(){
+      state.projection=$("projectionSelect").value;
+      $("distanceText").textContent=$("maxDistance").value;
+      drawGrid();
+      drawPoints();
+      renderList();
+      if(state.selected) updateInfo(state.selected);
+    }
+
+    function drawPoints(){
+      const pg=$("pointsLayer");
+      const lg=$("labelLayer");
+      const gg=$("guideLayer");
+      pg.innerHTML="";
+      lg.innerHTML="";
+      gg.innerHTML="";
+      const size=Number($("pointSize").value);
+      const showLabels=$("showLabels").checked;
+
+      visibleStations().forEach(s=>{
+        const p=transformed(s);
+        const isHi=state.highlighted.has(s.station) || (state.selected && state.selected.station===s.station);
+        const c=document.createElementNS("http://www.w3.org/2000/svg","circle");
+        c.setAttribute("cx",p.x);
+        c.setAttribute("cy",p.y);
+        c.setAttribute("r",isHi?size+3:size);
+        c.setAttribute("class","station-point");
+        c.setAttribute("stroke",s.polarity==="-" ? "#70b7ff" : isHi ? "#fff" : colorFor(s));
+        c.setAttribute("stroke-width",s.polarity==="-"?3:isHi?2:1.2);
+        c.setAttribute("fill",s.polarity==="+" ? colorFor(s) : s.polarity==="-" ? "#10131c" : "rgba(255,255,255,.32)");
+        c.setAttribute("opacity",isHi?1:(s.polarity?0.88:0.38));
+        if(isHi)c.setAttribute("filter","url(#glow)");
+        c.addEventListener("click",(ev)=>{ ev.stopPropagation(); selectStation(s.station); });
+        c.addEventListener("mouseenter",()=>previewStation(s.station));
+        pg.appendChild(c);
+
+        if(showLabels && (isHi || DEMO_STATIONS.includes(s.station))){
+          const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+          t.setAttribute("x",p.x+9);
+          t.setAttribute("y",p.y-9);
+          t.setAttribute("class","station-label");
+          t.textContent=s.station;
+          lg.appendChild(t);
+        }
+      });
+
+      if(state.selected){
+        drawGuideFor(state.selected);
+      }
+      if(state.challenge){
+        drawChallengeHint(false);
+      }
+    }
+
+    function drawGuideFor(s){
+      const p=transformed(s);
+      const gg=$("guideLayer");
+      const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+      line.setAttribute("x1",CENTER.x);
+      line.setAttribute("y1",CENTER.y);
+      line.setAttribute("x2",p.x);
+      line.setAttribute("y2",p.y);
+      line.setAttribute("class","guide-line");
+      gg.appendChild(line);
+
+      const ring=document.createElementNS("http://www.w3.org/2000/svg","circle");
+      ring.setAttribute("cx",CENTER.x);
+      ring.setAttribute("cy",CENTER.y);
+      ring.setAttribute("r",p.r);
+      ring.setAttribute("class","guide-ring");
+      gg.appendChild(ring);
+    }
+
+    function updateInfo(s){
+      const p=transformed(s);
+      const flipText = p.flipped
+        ? `${s.takeoff}° > 90°，所以 take-off 變成 180°-${s.takeoff}°=${p.drawTake}°；azimuth 變成 ${s.azimuth}°+180°=${p.drawAz}°`
+        : `${s.takeoff}° ≤ 90°，不需要翻面，直接用原始 azimuth 與 take-off angle。`;
+
+      $("stationInfo").innerHTML=`
+        <div class="big">${s.station}</div>
+        <div class="kv">
+          <div><span>原始 azimuth</span><b>${s.azimuth}°</b></div>
+          <div><span>原始 take-off</span><b>${s.takeoff}°</b></div>
+          <div><span>初動 polarity</span><b>${symbolText(s.polarity)}</b></div>
+          <div><span>震央距</span><b>${s.distance.toFixed(1)} km</b></div>
+          <div><span>作圖方位角</span><b>${p.drawAz}°</b></div>
+          <div><span>作圖角度</span><b>${p.drawTake}°</b></div>
+        </div>
+        <p style="color:var(--muted);margin-bottom:8px"><b>換算：</b>${flipText}</p>
+        <div class="formula">手繪位置：${p.drawAz}° 方向，離圓心約 ${p.drawTake}° / 90°。
+符號：${s.polarity==="+"?"畫實心點":s.polarity==="-"?"畫空心點":"未標明可不畫或畫灰點"}</div>
+      `;
+    }
+
+    function previewStation(code){
+      const s=STATIONS.find(x=>x.station===code);
+      if(!s || state.selected) return;
+      const p=transformed(s);
+      $("walkText").innerHTML=`滑過 <b>${s.station}</b>：原始 ${s.azimuth}° / ${s.takeoff}° / ${s.polarity || "未標"} → 作圖 ${p.drawAz}° / ${p.drawTake}°。`;
+    }
+
+    function selectStation(code){
+      const s=STATIONS.find(x=>x.station===code);
+      if(!s) return;
+      state.selected=s;
+      state.highlighted.add(s.station);
+      updateInfo(s);
+      drawPoints();
+      renderList();
+      const p=transformed(s);
+      $("walkText").innerHTML=`目前選到 <b>${s.station}</b>：在 ${p.drawAz}° 方向、${p.drawTake}° 位置，${s.polarity==="+"?"畫實心點":s.polarity==="-"?"畫空心點":"這站沒有標初動，可當參考點" }。`;
+    }
+
+    function renderList(){
+      const box=$("stationList");
+      const items=visibleStations().slice(0,90);
+      box.innerHTML=items.map(s=>{
+        const active=state.selected && state.selected.station===s.station ? "active":"";
+        const cls=s.polarity==="+"?"plus":s.polarity==="-"?"minus":"unknown";
+        const pol=s.polarity || "?";
+        return `<div class="station-item ${active}" data-station="${s.station}">
+          <strong>${s.station}</strong>
+          <small>${s.azimuth}° / ${s.takeoff}° · ${s.distance.toFixed(1)} km</small>
+          <span class="pill ${cls}">${pol}</span>
+        </div>`;
+      }).join("");
+      box.querySelectorAll(".station-item").forEach(el=>{
+        el.addEventListener("click",()=>selectStation(el.dataset.station));
+      });
+    }
+
+    function startWalk(){
+      state.walkIndex=(state.walkIndex+1)%DEMO_STATIONS.length;
+      const code=DEMO_STATIONS[state.walkIndex];
+      selectStation(code);
+      const s=state.selected;
+      const p=transformed(s);
+      const verb=s.polarity==="+"?"實心點":"空心點";
+      $("walkText").innerHTML=`
+        <b>逐站示範 ${state.walkIndex+1}/${DEMO_STATIONS.length}：${s.station}</b><br>
+        原始：azimuth ${s.azimuth}°、take-off ${s.takeoff}°、${s.polarity}。
+        ${p.flipped ? `因為 take-off > 90°，轉成 ${p.drawAz}° / ${p.drawTake}°。` : `不用翻面，直接畫 ${p.drawAz}° / ${p.drawTake}°。`}
+        手繪時：沿 ${p.drawAz}° 方向，${p.drawTake<30?"靠近圓心":p.drawTake>65?"靠近圓周":"位在中間偏內"}，畫${verb}。
+      `;
+    }
+
+    function randomChallenge(){
+      const pool=STATIONS.filter(s=>DEMO_STATIONS.includes(s.station));
+      const s=pool[Math.floor(Math.random()*pool.length)];
+      state.challenge=s;
+      state.selected=null;
+      $("challengeResult").innerHTML=`題目：<b>${s.station}</b>，azimuth ${s.azimuth}°，take-off ${s.takeoff}°，polarity ${s.polarity}。請直接在球上點你覺得的位置。`;
+      drawPoints();
+    }
+
+    function svgPoint(evt){
+      const svg=$("beachball");
+      const pt=svg.createSVGPoint();
+      pt.x=evt.clientX; pt.y=evt.clientY;
+      return pt.matrixTransform(svg.getScreenCTM().inverse());
+    }
+
+    function handleChallengeClick(evt){
+      if(!state.challenge || state.drawMode) return;
+      const pos=svgPoint(evt);
+      const p=transformed(state.challenge);
+      const err=Math.hypot(pos.x-p.x,pos.y-p.y);
+      const msg=err<18 ? "超準！" : err<38 ? "很接近。" : err<70 ? "方向大致對，但距離圓心要再調。" : "差距較大，請檢查是否忘記翻面或方位角畫反。";
+      $("challengeResult").innerHTML=`${msg} 誤差約 ${err.toFixed(0)} px。正確位置：${p.drawAz}° / ${p.drawTake}°，${state.challenge.polarity==="+"?"實心點":"空心點"}。`;
+      state.selected=state.challenge;
+      state.highlighted.add(state.challenge.station);
+      state.challenge=null;
+      updateInfo(state.selected);
+      drawPoints();
+    }
+
+    function drawChallengeHint(showAnswer){
+      if(!state.challenge || !showAnswer) return;
+      const p=transformed(state.challenge);
+      const gg=$("guideLayer");
+      const target=document.createElementNS("http://www.w3.org/2000/svg","circle");
+      target.setAttribute("cx",p.x);
+      target.setAttribute("cy",p.y);
+      target.setAttribute("r",18);
+      target.setAttribute("fill","none");
+      target.setAttribute("stroke","#f2c46d");
+      target.setAttribute("stroke-width","3");
+      gg.appendChild(target);
+    }
+
+    function startDraw(evt){
+      if(!state.drawMode) return;
+      state.drawing=true;
+      const pos=svgPoint(evt);
+      const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+      path.setAttribute("class","draw-path");
+      path.setAttribute("d",`M ${pos.x} ${pos.y}`);
+      $("drawLayer").appendChild(path);
+      state.activePath=path;
+    }
+
+    function moveDraw(evt){
+      if(!state.drawMode || !state.drawing || !state.activePath) return;
+      const pos=svgPoint(evt);
+      const d=state.activePath.getAttribute("d");
+      state.activePath.setAttribute("d",`${d} L ${pos.x} ${pos.y}`);
+    }
+
+    function endDraw(){
+      state.drawing=false;
+      state.activePath=null;
+    }
+
+    function copyCsv(){
+      const rows=[["station","distance_km","azimuth","takeoff_angle","polarity","plot_azimuth","plot_takeoff"]];
+      STATIONS.forEach(s=>{
+        const p=transformed(s);
+        rows.push([s.station,s.distance,s.azimuth,s.takeoff,s.polarity,p.drawAz,p.drawTake]);
+      });
+      const csv=rows.map(r=>r.join(",")).join("\n");
+      navigator.clipboard.writeText(csv);
+      const t=$("toast");
+      t.textContent="已複製 CSV";
+      t.classList.add("show");
+      setTimeout(()=>t.classList.remove("show"),1600);
+    }
+
+    function bind(){
+      ["searchBox","projectionSelect","maxDistance","pointSize","showPlus","showMinus","showUnknown","showLabels","demoOnly"].forEach(id=>{
+        $(id).addEventListener("input",render);
+        $(id).addEventListener("change",render);
+      });
+      $("drawMode").addEventListener("change",(e)=>{
+        state.drawMode=e.target.checked;
+        $("walkText").innerHTML=state.drawMode
+          ? "已開啟畫節線模式：直接在球上拖曳，就能練習畫出分隔 + / − 的節面線。"
+          : "已關閉畫節線模式。";
+      });
+      $("recommendedBtn").addEventListener("click",()=>{
+        DEMO_STATIONS.forEach(s=>state.highlighted.add(s));
+        $("demoOnly").checked=true;
+        render();
+      });
+      $("clearDrawBtn").addEventListener("click",()=>{
+        $("drawLayer").innerHTML="";
+        state.highlighted.clear();
+        DEMO_STATIONS.forEach(s=>state.highlighted.add(s));
+        render();
+      });
+      $("walkBtn").addEventListener("click",startWalk);
+      $("challengeBtn").addEventListener("click",randomChallenge);
+      const svg=$("beachball");
+      svg.addEventListener("click",handleChallengeClick);
+      svg.addEventListener("pointerdown",startDraw);
+      svg.addEventListener("pointermove",moveDraw);
+      window.addEventListener("pointerup",endDraw);
+      window.copyCsv=copyCsv;
+    }
+
+    counts();
+    bind();
+    render();
+    selectStation("TWC");
+  </script>
+</body>
+</html>
