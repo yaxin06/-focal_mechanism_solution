@@ -1,0 +1,1 @@
+# -focal_mechanism_solution
